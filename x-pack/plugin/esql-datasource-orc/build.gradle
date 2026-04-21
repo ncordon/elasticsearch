@@ -23,7 +23,47 @@ base {
   archivesName = 'esql-datasource-orc'
 }
 
+// Remove the shaded org.eclipse.jetty:jetty-http classes from hadoop-client-runtime. The uber-jar bundles
+// Hadoop's embedded HTTP server, which we never load (ORC uses Hadoop only as a client library for FileSystem
+// I/O), so the shaded jetty-http bytecode is unreachable and only surfaces as a spurious "vulnerable jetty-http"
+// hit in class-scanning vulnerability reports.
+def jettyHttpStripped = Attribute.of('hadoop-jetty-http-stripped', Boolean)
+
+configurations {
+  compileClasspath {
+    attributes {
+      attribute(jettyHttpStripped, true)
+    }
+  }
+  runtimeClasspath {
+    attributes {
+      attribute(jettyHttpStripped, true)
+    }
+  }
+  testCompileClasspath {
+    attributes {
+      attribute(jettyHttpStripped, true)
+    }
+  }
+  testRuntimeClasspath {
+    attributes {
+      attribute(jettyHttpStripped, true)
+    }
+  }
+}
+
 dependencies {
+  attributesSchema {
+    attribute(jettyHttpStripped)
+  }
+  artifactTypes.getByName("jar") {
+    attributes.attribute(jettyHttpStripped, false)
+  }
+  registerTransform(org.elasticsearch.gradle.internal.dependencies.patches.hadoop.HadoopJettyHttpStripper) {
+    from.attribute(jettyHttpStripped, false)
+    to.attribute(jettyHttpStripped, true)
+  }
+
   compileOnly project(path: xpackModule('esql'))
   compileOnly project(path: xpackModule('esql-core'))
   compileOnly project(path: xpackModule('core'))
@@ -57,6 +97,8 @@ dependencies {
   implementation("org.apache.hadoop:hadoop-client-api:${versions.hadoop}") {
     exclude group: 'org.slf4j', module: 'slf4j-api'
   }
+  // This jar is post-processed by HadoopJettyHttpStripper (registered above): the shaded
+  // org.eclipse.jetty:jetty-http classes are removed from the jar before it reaches the classpath.
   implementation("org.apache.hadoop:hadoop-client-runtime:${versions.hadoop}") {
     exclude group: 'org.slf4j', module: 'slf4j-api'
   }
