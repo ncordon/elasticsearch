@@ -49,8 +49,8 @@ ROW row = [
 | STATS first_val = EARLIEST(number)
 ;
 
-warning:Line 15:10: evaluation of [TO_LONG(number)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 15:10: org.elasticsearch.xpack.esql.core.InvalidArgumentException: Cannot parse number []
+warningRegex:Line 15:10: evaluation of \[TO_LONG\(number\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 15:10: org\.elasticsearch\.xpack\.esql\.core\.InvalidArgumentException: Cannot parse number \[\]
 
 first_val:long
 null

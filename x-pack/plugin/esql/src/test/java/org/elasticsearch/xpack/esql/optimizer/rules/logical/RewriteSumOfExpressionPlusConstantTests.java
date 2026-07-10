@@ -36,6 +36,15 @@ public class RewriteSumOfExpressionPlusConstantTests extends AbstractLogicalPlan
         assertWarnings("Line 2:9: Field 's' shadowed by field at line 2:30");
     }
 
+    public void testShadowedBareSumProducesWarning() {
+        plan("""
+            from employees
+            | stats s1 = sum(salary + 1), c = sum(salary), c = count(salary), s2 = sum(salary + 2)
+            """, new TestSubstitutionOnlyOptimizer(MvSingleValueOrNull.MV_SINGLE_VALUE_OR_NULL_TRANSPORT_VERSION));
+
+        assertWarnings("Line 2:31: Field 'c' shadowed by field at line 2:48");
+    }
+
     public void testAvgOfFieldPlusConstantNotRewrittenByRule() {
         var plan = plan("""
             from test

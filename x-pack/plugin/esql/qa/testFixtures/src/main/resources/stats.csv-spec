@@ -2294,8 +2294,8 @@ required_capability: agg_weighted_avg
 row v = [1, 2, 3], w = [1, 2, 3]
 | stats w_avg = weighted_avg(v, w)
 ;
-warning:Line 2:17: evaluation of [weighted_avg(v, w)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:17: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:17: evaluation of \[weighted_avg\(v, w\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:17: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 w_avg:double
 null
@@ -2307,8 +2307,8 @@ from employees
 | eval w = [1, 2, 3]
 | stats w_avg = weighted_avg(salary, w)
 ;
-warning:Line 3:17: evaluation of [weighted_avg(salary, w)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:17: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 3:17: evaluation of \[weighted_avg\(salary, w\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:17: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 w_avg:double
 null
@@ -2320,8 +2320,8 @@ from employees
 | where emp_no == 10002 or emp_no == 10003
 | stats w_avg = weighted_avg(salary, salary_change.int)
 ;
-warning:Line 3:17: evaluation of [weighted_avg(salary, salary_change.int)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:17: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 3:17: evaluation of \[weighted_avg\(salary, salary_change\.int\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:17: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 w_avg:double
 null
@@ -2333,8 +2333,8 @@ from employees
 | where emp_no == 10002 or emp_no == 10003
 | stats w_avg = weighted_avg(salary_change.int, height)
 ;
-warning:Line 3:17: evaluation of [weighted_avg(salary_change.int, height)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:17: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 3:17: evaluation of \[weighted_avg\(salary_change\.int, height\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:17: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 w_avg:double
 null
@@ -2346,8 +2346,8 @@ from employees
 | eval w = 0
 | stats w_avg = weighted_avg(salary, w)
 ;
-warning:Line 3:17: evaluation of [weighted_avg(salary, w)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:17: java.lang.ArithmeticException: / by zero
+warningRegex:Line 3:17: evaluation of \[weighted_avg\(salary, w\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:17: java\.lang\.ArithmeticException: / by zero
 
 w_avg:double
 null
@@ -2359,8 +2359,8 @@ from employees
 | eval w = 0 + 0
 | stats w_avg = weighted_avg(salary, w)
 ;
-warning:Line 3:17: evaluation of [weighted_avg(salary, w)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:17: java.lang.ArithmeticException: / by zero
+warningRegex:Line 3:17: evaluation of \[weighted_avg\(salary, w\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:17: java\.lang\.ArithmeticException: / by zero
 
 w_avg:double
 null
@@ -2371,7 +2371,7 @@ required_capability: stats_alias_collision_warnings
 FROM employees
 | STATS x = MAX(emp_no), x = MIN(emp_no)
 ;
-warning:Line 2:9: Field 'x' shadowed by field at line 2:26
+warningRegex:Line 2:9: Field 'x' shadowed by field at line 2:26
 
 x:integer
 10001
@@ -3887,10 +3887,10 @@ FROM employees
 | EVAL x = languages * 9223372036854775807
 | STATS overflow = SUM(x), underflow = SUM(-x)
 ;
-warning:Line 5:20: evaluation of [SUM(x)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 5:20: java.lang.ArithmeticException: long overflow
-warning:Line 5:40: evaluation of [SUM(-x)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 5:40: java.lang.ArithmeticException: long overflow
+warningRegex:Line 5:20: evaluation of \[SUM\(x\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 5:20: java\.lang\.ArithmeticException: long overflow
+warningRegex:Line 5:40: evaluation of \[SUM\(-x\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 5:40: java\.lang\.ArithmeticException: long overflow
 
 overflow:long | underflow:long
 null          | null
@@ -3939,10 +3939,10 @@ ROW x = [9223372036854775807, 9223372036854775807]
 | MV_EXPAND x
 | STATS overflow = SUM(x), underflow = SUM(-x)
 ;
-warning:Line 3:20: evaluation of [SUM(x)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:20: java.lang.ArithmeticException: long overflow
-warning:Line 3:40: evaluation of [SUM(-x)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:40: java.lang.ArithmeticException: long overflow
+warningRegex:Line 3:20: evaluation of \[SUM\(x\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:20: java\.lang\.ArithmeticException: long overflow
+warningRegex:Line 3:40: evaluation of \[SUM\(-x\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:40: java\.lang\.ArithmeticException: long overflow
 
 overflow:long | underflow:long
 null          | null
@@ -4029,10 +4029,10 @@ FROM employees
 | EVAL x = languages * 9223372036854775807
 | STATS overflow = WEIGHTED_AVG(x, 1), underflow = WEIGHTED_AVG(-x, 1)
 ;
-warning:Line 5:20: evaluation of [WEIGHTED_AVG(x, 1)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 5:20: java.lang.ArithmeticException: long overflow
-warning:Line 5:52: evaluation of [WEIGHTED_AVG(-x, 1)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 5:52: java.lang.ArithmeticException: long overflow
+warningRegex:Line 5:20: evaluation of \[WEIGHTED_AVG\(x, 1\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 5:20: java\.lang\.ArithmeticException: long overflow
+warningRegex:Line 5:52: evaluation of \[WEIGHTED_AVG\(-x, 1\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 5:52: java\.lang\.ArithmeticException: long overflow
 
 overflow:double | underflow:double
 null            | null
@@ -4045,10 +4045,10 @@ ROW x = [9223372036854775807, 9223372036854775807]
 | MV_EXPAND x
 | STATS overflow = WEIGHTED_AVG(x, 1), underflow = WEIGHTED_AVG(-x, 1)
 ;
-warning:Line 3:20: evaluation of [WEIGHTED_AVG(x, 1)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:20: java.lang.ArithmeticException: long overflow
-warning:Line 3:52: evaluation of [WEIGHTED_AVG(-x, 1)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:52: java.lang.ArithmeticException: long overflow
+warningRegex:Line 3:20: evaluation of \[WEIGHTED_AVG\(x, 1\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:20: java\.lang\.ArithmeticException: long overflow
+warningRegex:Line 3:52: evaluation of \[WEIGHTED_AVG\(-x, 1\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:52: java\.lang\.ArithmeticException: long overflow
 
 overflow:double | underflow:double
 null            | null
@@ -4502,10 +4502,10 @@ sumExpressionWithConstantMultipleClausesWithMultiValuedField
 FROM employees
 | STATS s1 = round(SUM(salary_change + 1.0), 2), s2 = round(SUM(salary_change + 2.0), 2)
 ;
-warning:Line 2:24: evaluation of [salary_change + 1.0] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:24: java.lang.IllegalArgumentException: single-value function encountered multi-value
-warning:Line 2:65: evaluation of [salary_change + 2.0] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:65: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:24: evaluation of \[salary_change \+ 1\.0\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:24: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:65: evaluation of \[salary_change \+ 2\.0\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:65: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 s1:double | s2:double
 -1.47     | 22.53
@@ -4533,10 +4533,10 @@ sumExpressionWithConstantMultipleClausesMultiValueWarning
 row salary_change = [1.1, 2.2]
 | stats s1 = sum(salary_change + 1.0), s2 = sum(salary_change + 2.0)
 ;
-warning:Line 2:18: evaluation of [salary_change + 1.0] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:18: java.lang.IllegalArgumentException: single-value function encountered multi-value
-warning:Line 2:49: evaluation of [salary_change + 2.0] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:49: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:18: evaluation of \[salary_change \+ 1\.0\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:18: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:49: evaluation of \[salary_change \+ 2\.0\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:49: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 s1:double | s2:double
 null       | null
@@ -4581,7 +4581,7 @@ required_capability: stats_alias_collision_warnings
 FROM employees
 | STATS s = SUM(salary + 1), s = SUM(salary + 2)
 ;
-warning:Line 2:9: Field 's' shadowed by field at line 2:30
+warningRegex:Line 2:9: Field 's' shadowed by field at line 2:30
 
 s:long
 4825055
@@ -4634,7 +4634,7 @@ required_capability: stats_alias_collision_warnings
 FROM employees
 | STATS s1 = SUM(salary + 1), c = SUM(salary), c = COUNT(salary), s2 = SUM(salary + 2)
 ;
-warning:Line 2:31: Field 'c' shadowed by field at line 2:48
+warningRegex:Line 2:31: Field 'c' shadowed by field at line 2:48
 
 s1:long  | c:long | s2:long
 4824955  | 100    | 4825055

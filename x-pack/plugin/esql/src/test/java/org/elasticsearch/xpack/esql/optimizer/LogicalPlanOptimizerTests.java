@@ -526,6 +526,25 @@ public class LogicalPlanOptimizerTests extends AbstractLogicalPlanOptimizerTests
         );
     }
 
+    // Ungrouped, two-alias variant of testRemoveOverridesInAggregate: no BY clause, so no TopN/sort is added
+    // (just the default LIMIT 1000) and only a single shadow warning is produced (only one earlier alias to shadow).
+    public void testRemoveOverridesInUngroupedAggregate() {
+        var plan = plan("""
+            from test
+            | stats x = max(emp_no), x = min(emp_no)
+            """);
+
+        var limit = asLimit(plan, 1000, false);
+        var agg = as(limit.child(), Aggregate.class);
+        var aggregates = agg.aggregates();
+        assertThat(aggregates, hasSize(1));
+        assertThat(Expressions.names(aggregates), contains("x"));
+        var alias = as(aggregates.get(0), Alias.class);
+        var min = as(alias.child(), Min.class);
+        assertThat(Expressions.name(min.arguments().get(0)), equalTo("emp_no"));
+        assertWarnings("Line 2:9: Field 'x' shadowed by field at line 2:26");
+    }
+
     // expected stats b by b (grouping overrides the rest of the aggs)
 
     /**

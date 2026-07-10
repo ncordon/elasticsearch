@@ -105,6 +105,52 @@ public class WeightedAvgTests extends AbstractAggregationTestCase {
             )
         );
 
+        // A single row whose number and/or weight value is itself multivalued can't be aggregated: the compute
+        // engine's generic per-row guard rejects it before WeightedAvg ever sees the row.
+        List<String> mvWarnings = List.of(
+            "Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.",
+            "Line 1:1: java.lang.IllegalArgumentException: single-value function encountered multi-value"
+        );
+        suppliers.add(
+            new TestCaseSupplier("<multivalued number and weight>", List.of(DataType.INTEGER, DataType.INTEGER), () -> {
+                return new TestCaseSupplier.TestCase(
+                    List.of(
+                        TestCaseSupplier.TypedData.multiRow(List.of(List.of(1, 2, 3), List.of(1, 2, 3)), DataType.INTEGER, "number"),
+                        TestCaseSupplier.TypedData.multiRow(List.of(List.of(1, 2, 3), List.of(1, 2, 3)), DataType.INTEGER, "weight")
+                    ),
+                    "WeightedAvg[number=Attribute[channel=0],weight=Attribute[channel=1]]",
+                    DataType.DOUBLE,
+                    nullValue()
+                ).withWarnings(mvWarnings);
+            })
+        );
+        suppliers.add(
+            new TestCaseSupplier("<single-valued number>, <multivalued weight>", List.of(DataType.INTEGER, DataType.INTEGER), () -> {
+                return new TestCaseSupplier.TestCase(
+                    List.of(
+                        TestCaseSupplier.TypedData.multiRow(List.of(5, 5), DataType.INTEGER, "number"),
+                        TestCaseSupplier.TypedData.multiRow(List.of(List.of(1, 2, 3), List.of(1, 2, 3)), DataType.INTEGER, "weight")
+                    ),
+                    "WeightedAvg[number=Attribute[channel=0],weight=Attribute[channel=1]]",
+                    DataType.DOUBLE,
+                    nullValue()
+                ).withWarnings(mvWarnings);
+            })
+        );
+        suppliers.add(
+            new TestCaseSupplier("<multivalued number>, <single-valued weight>", List.of(DataType.INTEGER, DataType.INTEGER), () -> {
+                return new TestCaseSupplier.TestCase(
+                    List.of(
+                        TestCaseSupplier.TypedData.multiRow(List.of(List.of(1, 2, 3), List.of(1, 2, 3)), DataType.INTEGER, "number"),
+                        TestCaseSupplier.TypedData.multiRow(List.of(5, 5), DataType.INTEGER, "weight")
+                    ),
+                    "WeightedAvg[number=Attribute[channel=0],weight=Attribute[channel=1]]",
+                    DataType.DOUBLE,
+                    nullValue()
+                ).withWarnings(mvWarnings);
+            })
+        );
+
         // Same as parameterSuppliersFromTypedDataWithDefaultChecks without withNoRowsExpectingNull(),
         // as it throws exceptions, and it's manually tested here
         return parameterSuppliersFromTypedData(randomizeBytesRefsOffset(suppliers));

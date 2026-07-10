@@ -186,10 +186,10 @@ ROW
       overflow = SUM(overflow),
       underflow = SUM(underflow)
 ;
-warning:Line 7:12: evaluation of [SUM(overflow)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 7:12: java.lang.ArithmeticException: not a finite float number: Infinity
-warning:Line 8:13: evaluation of [SUM(underflow)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 8:13: java.lang.ArithmeticException: not a finite float number: -Infinity
+warningRegex:Line 7:12: evaluation of \[SUM\(overflow\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 7:12: java\.lang\.ArithmeticException: not a finite float number: Infinity
+warningRegex:Line 8:13: evaluation of \[SUM\(underflow\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 8:13: java\.lang\.ArithmeticException: not a finite float number: -Infinity
 
 overflow:dense_vector | underflow:dense_vector
 null                  | null

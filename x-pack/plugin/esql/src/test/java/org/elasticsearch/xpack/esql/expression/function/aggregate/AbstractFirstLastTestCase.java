@@ -17,6 +17,7 @@ import org.elasticsearch.xpack.esql.expression.function.TestCaseSupplier;
 import org.hamcrest.Matchers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -92,7 +93,34 @@ public abstract class AbstractFirstLastTestCase extends AbstractAggregationTestC
             }
         }
 
+        suppliers.add(nullSortRowsAreSkipped(isFirst));
+
         return parameterSuppliersFromTypedData(randomizeBytesRefsOffset(suppliers));
+    }
+
+    /**
+     * Rows whose sort key is null must be skipped entirely (not just treated as tied), rather than folded in
+     * alongside the real values. {@link #makeSupplier} never exercises this: its sort suppliers are either
+     * entirely real values or (for {@link DataType#NULL}) entirely null, never a mix of both within one column.
+     */
+    private static TestCaseSupplier nullSortRowsAreSkipped(boolean first) {
+        List<Long> values = List.of(0L, 1000L, 2000L, 3000L, 4000L, 5000L, 6000L);
+        List<Long> sorts = Arrays.asList(null, 2L, null, 4L, 5L, 6L, null);
+        long expectedSort = first ? 2L : 6L;
+        long expected = values.get(sorts.indexOf(expectedSort));
+        return new TestCaseSupplier(
+            (first ? "first" : "last") + " skips null-sort rows",
+            List.of(DataType.DATETIME, DataType.LONG),
+            () -> new TestCaseSupplier.TestCase(
+                List.of(
+                    TestCaseSupplier.TypedData.multiRow(values, DataType.DATETIME, "values"),
+                    TestCaseSupplier.TypedData.multiRow(sorts, DataType.LONG, "sorts")
+                ),
+                Matchers.containsString(first ? "First" : "Last"),
+                DataType.DATETIME,
+                Matchers.equalTo(expected)
+            )
+        );
     }
 
     private static TestCaseSupplier makeSupplier(
