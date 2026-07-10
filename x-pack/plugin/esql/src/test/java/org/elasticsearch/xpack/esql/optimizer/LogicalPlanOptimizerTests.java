@@ -5385,6 +5385,59 @@ public class LogicalPlanOptimizerTests extends AbstractLogicalPlanOptimizerTests
         );
     }
 
+    // Comparison-operator counterpart of testNoWrongIsNotNullPruning: a multivalued comparison also nulls the
+    // filtered column via the same "single-value function encountered multi-value" guard, so it must prune too.
+    public void testNoWrongIsNotNullPruningComparisonOperation() {
+        var plan = optimizedPlan("""
+              ROW a = 5, b = [ 1, 2 ]
+              | EVAL same = a == b
+              | LIMIT 1
+              | WHERE same IS NOT NULL
+            """);
+
+        var local = as(plan, LocalRelation.class);
+        assertThat(local.supplier(), equalTo(EmptyLocalSupplier.EMPTY));
+        assertWarnings(
+            "Line 2:17: evaluation of [a == b] failed, treating result as null. Only first 20 failures recorded.",
+            "Line 2:17: java.lang.IllegalArgumentException: single-value function encountered multi-value"
+        );
+    }
+
+    // Same as above, but `a` happens to equal one element of `b`: the comparison must still null out (MV comparisons
+    // aren't "any match" semantics), so the IS NOT NULL filter must still prune to empty.
+    public void testNoWrongIsNotNullPruningComparisonOperationWithPartialMatch() {
+        var plan = optimizedPlan("""
+              ROW a = 5, b = [ 5, 2 ]
+              | EVAL same = a == b
+              | LIMIT 1
+              | WHERE same IS NOT NULL
+            """);
+
+        var local = as(plan, LocalRelation.class);
+        assertThat(local.supplier(), equalTo(EmptyLocalSupplier.EMPTY));
+        assertWarnings(
+            "Line 2:17: evaluation of [a == b] failed, treating result as null. Only first 20 failures recorded.",
+            "Line 2:17: java.lang.IllegalArgumentException: single-value function encountered multi-value"
+        );
+    }
+
+    // Counterpart of the above with IS NULL instead of IS NOT NULL: since `same` legitimately evaluates to null,
+    // the filter keeps the row rather than pruning the plan to an empty relation.
+    public void testNoWrongIsNullPruningComparisonOperation() {
+        var plan = optimizedPlan("""
+              ROW a = 5, b = [ 1, 2 ]
+              | EVAL same = a == b
+              | LIMIT 1
+              | WHERE same IS NULL
+            """);
+
+        assertThat(plan, not(instanceOf(LocalRelation.class)));
+        assertWarnings(
+            "Line 2:17: evaluation of [a == b] failed, treating result as null. Only first 20 failures recorded.",
+            "Line 2:17: java.lang.IllegalArgumentException: single-value function encountered multi-value"
+        );
+    }
+
     /**
      * Pushing down EVAL/GROK/DISSECT/ENRICH must not accidentally shadow attributes required by SORT.
      * <p>

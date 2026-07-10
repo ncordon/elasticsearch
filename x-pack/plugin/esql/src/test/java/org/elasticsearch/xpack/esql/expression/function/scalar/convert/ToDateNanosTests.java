@@ -138,6 +138,85 @@ public class ToDateNanosTests extends AbstractConfigurationFunctionTestCase {
                         : ("failed to parse date field [" + bytesRef.utf8ToString() + "] with format [strict_date_optional_time_nanos]"))
             )
         );
+        // A syntactically valid date string that fails calendar validation (April only has 30 days) throws a
+        // java.time.DateTimeException with a different message shape than a plain format mismatch.
+        suppliers.add(
+            new TestCaseSupplier(
+                "<calendar-invalid date nanos string>",
+                List.of(DataType.KEYWORD),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(new TestCaseSupplier.TypedData("2026-04-31", DataType.KEYWORD, "source")),
+                    "ToDateNanosFromStringEvaluator[in=" + read + ", formatter=format[strict_date_optional_time_nanos] locale[]]",
+                    DataType.DATE_NANOS,
+                    org.hamcrest.Matchers.nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning("Line 1:1: java.lang.IllegalArgumentException: Invalid date 'APRIL 31'")
+            )
+        );
+        // A syntactically valid ISO date string that parses fine but falls outside the nanosecond-representable
+        // range (1970-01-01T00:00:00 to 2262-04-11T23:47:16.854775807) still fails, just later in the pipeline
+        // (during the nanosecond conversion, not during parsing) with a different message than a malformed string.
+        suppliers.add(
+            new TestCaseSupplier("<out-of-range date nanos string>", List.of(DataType.KEYWORD), () -> new TestCaseSupplier.TestCase(
+                List.of(new TestCaseSupplier.TypedData("2262-04-12T00:00:00.000", DataType.KEYWORD, "source")),
+                "ToDateNanosFromStringEvaluator[in=" + read + ", formatter=format[strict_date_optional_time_nanos] locale[]]",
+                DataType.DATE_NANOS,
+                org.hamcrest.Matchers.nullValue()
+            ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                .withWarning(
+                    "Line 1:1: java.lang.IllegalArgumentException: date[2262-04-12T00:00:00Z] is after "
+                        + "2262-04-11T23:47:16.854775807 and cannot be stored in nanosecond resolution"
+                )
+            )
+        );
+        suppliers.add(
+            new TestCaseSupplier("<pre-1970 date nanos string>", List.of(DataType.KEYWORD), () -> new TestCaseSupplier.TestCase(
+                List.of(new TestCaseSupplier.TypedData("1969-04-12T00:00:00.000", DataType.KEYWORD, "source")),
+                "ToDateNanosFromStringEvaluator[in=" + read + ", formatter=format[strict_date_optional_time_nanos] locale[]]",
+                DataType.DATE_NANOS,
+                org.hamcrest.Matchers.nullValue()
+            ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                .withWarning(
+                    "Line 1:1: java.lang.IllegalArgumentException: date[1969-04-12T00:00:00Z] is before the epoch in 1970 "
+                        + "and cannot be stored in nanosecond resolution"
+                )
+            )
+        );
+        // A DATETIME (millisecond) value converts to a distinct exception from the ToDateNanosFromDatetimeEvaluator
+        // path, since it fails during the nanosecond conversion rather than during string parsing.
+        suppliers.add(
+            new TestCaseSupplier(
+                "<out-of-range datetime millis>",
+                List.of(DataType.DATETIME),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(new TestCaseSupplier.TypedData(9223372800000L, DataType.DATETIME, "source")),
+                    "ToDateNanosFromDatetimeEvaluator[in=" + read + "]",
+                    DataType.DATE_NANOS,
+                    org.hamcrest.Matchers.nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning(
+                        "Line 1:1: java.lang.IllegalArgumentException: milliSeconds [9223372800000] are after "
+                            + "2262-04-11T23:47:16.854775807 and cannot be converted to nanoseconds"
+                    )
+            )
+        );
+        suppliers.add(
+            new TestCaseSupplier(
+                "<pre-1970 datetime millis>",
+                List.of(DataType.DATETIME),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(new TestCaseSupplier.TypedData(-22809600000L, DataType.DATETIME, "source")),
+                    "ToDateNanosFromDatetimeEvaluator[in=" + read + "]",
+                    DataType.DATE_NANOS,
+                    org.hamcrest.Matchers.nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning(
+                        "Line 1:1: java.lang.IllegalArgumentException: milliSeconds [-22809600000] are before the epoch in 1970 "
+                            + "and cannot be converted to nanoseconds"
+                    )
+            )
+        );
+
         suppliers = TestCaseSupplier.mapTestCases(
             suppliers,
             tc -> tc.withConfiguration(TEST_SOURCE, configurationForTimezone(ZoneOffset.UTC))

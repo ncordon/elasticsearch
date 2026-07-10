@@ -146,8 +146,8 @@ required_capability: date_range_field_type_v6
 ROW s = "not-a-range"
 | EVAL r = TO_DATE_RANGE(s)
 ;
-warning:Line 2:12: evaluation of [TO_DATE_RANGE(s)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:12: java.lang.IllegalArgumentException: expected date range in the form 'from..to', got [not-a-range]
+warningRegex:Line 2:12: evaluation of \[TO_DATE_RANGE\(s\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:12: java\.lang\.IllegalArgumentException: expected date range in the form 'from\.\.to', got \[not-a-range\]
 
 s:keyword   | r:date_range
 not-a-range | null

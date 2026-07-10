@@ -110,8 +110,8 @@ FROM employees
 | WHERE is_rehired == ([true, false])
 | KEEP is_rehired
 ;
-warning:Line 2:9: evaluation of [is_rehired == ([true, false])] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[is_rehired == \(\[true, false\]\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     is_rehired:boolean
 ;
@@ -123,8 +123,8 @@ FROM employees
 | WHERE is_rehired != ([true, false])
 | KEEP is_rehired
 ;
-warning:Line 2:9: evaluation of [is_rehired != ([true, false])] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[is_rehired != \(\[true, false\]\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     is_rehired:boolean
 ;
@@ -137,8 +137,8 @@ FROM employees
 | WHERE x == [true, false]
 | KEEP x
 ;
-warning:Line 3:9: evaluation of [x == [true, false]] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 3:9: evaluation of \[x == \[true, false\]\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     x:boolean
 ;
@@ -151,8 +151,8 @@ FROM employees
 | WHERE x != [true, false]
 | KEEP x
 ;
-warning:Line 3:9: evaluation of [x != [true, false]] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 3:9: evaluation of \[x != \[true, false\]\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     x:boolean
 ;
@@ -178,8 +178,8 @@ FROM employees
 | WHERE salary_change IN ([1,2,3])
 | KEEP salary_change
 ;
-warning:Line 2:9: evaluation of [salary_change IN ([1,2,3])] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[salary_change IN \(\[1,2,3\]\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     salary_change:double
 ;
@@ -191,8 +191,8 @@ FROM employees
 | WHERE salary_change == [1,2,3]
 | KEEP salary_change
 ;
-warning:Line 2:9: evaluation of [salary_change == [1,2,3]] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[salary_change == \[1,2,3\]\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     salary_change:double
 ;
@@ -204,8 +204,8 @@ FROM employees
 | WHERE salary::double != [1,2,3]
 | KEEP salary
 ;
-warning:Line 2:9: evaluation of [salary::double != [1,2,3]] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[salary::double != \[1,2,3\]\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     salary:integer
 ;
@@ -217,8 +217,8 @@ FROM employees
 | WHERE salary > [1,2,3]
 | KEEP salary
 ;
-warning:Line 2:9: evaluation of [salary > [1,2,3]] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[salary > \[1,2,3\]\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     salary:integer
 ;
@@ -231,8 +231,8 @@ FROM employees
 | WHERE first_name > ["A","B"]
 | KEEP first_name
 ;
-warning:Line 2:9: evaluation of [first_name > [\"A\",\"B\"]] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[first_name > \[\\"A\\",\\"B\\"\]\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     first_name:keyword
 ;
@@ -243,8 +243,8 @@ required_capability: fix_mv_constant_comparison_field
 FROM date_nanos
 | WHERE nanos > [1.0,2.0]::date_nanos
 ;
-warning:Line 2:9: evaluation of [nanos > [1.0,2.0]::date_nanos] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[nanos > \[1\.0,2\.0\]::date_nanos\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     millis:date     |     nanos:date_nanos     |      num:long      
 ;
@@ -255,8 +255,8 @@ required_capability: fix_mv_constant_comparison_field
 FROM date_nanos
 | WHERE num > [1,2]
 ;
-warning:Line 2:9: evaluation of [num > [1,2]] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[num > \[1,2\]\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     millis:date     |     nanos:date_nanos     |      num:long      
 ;
@@ -267,8 +267,8 @@ required_capability: fix_mv_constant_comparison_field
 FROM apps
 | WHERE version > to_ver(["1.2.3.4","127.0.0.1"])
 ;
-warning:Line 2:9: evaluation of [version > to_ver([\"1.2.3.4\",\"127.0.0.1\"])] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[version > to_ver\(\[\\"1\.2\.3\.4\\",\\"127\.0\.0\.1\\"\]\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
        id:i       |     name:s      |    version:v
 ;    
@@ -280,10 +280,10 @@ from hosts
 | where ip1 > ["1.2.3.4","127.0.0.1"]::ip OR ip0 < to_ip(["1.2.3.4","127.0.0.1"])
 | keep ip1, ip0
 ;
-warning:Line 2:9: evaluation of [ip1 > [\"1.2.3.4\",\"127.0.0.1\"]::ip] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
-warning:Line 2:46: evaluation of [ip0 < to_ip([\"1.2.3.4\",\"127.0.0.1\"])] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:46: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[ip1 > \[\\"1\.2\.3\.4\\",\\"127\.0\.0\.1\\"\]::ip\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:46: evaluation of \[ip0 < to_ip\(\[\\"1\.2\.3\.4\\",\\"127\.0\.0\.1\\"\]\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:46: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     ip1:ip     |     ip0:ip
 ;
@@ -295,8 +295,8 @@ from ul_logs
 | where bytes_in > [16002960716282089759, 17281501450843634251]
 | keep bytes_in
 ;
-warning:Line 2:9: evaluation of [bytes_in > [16002960716282089759, 17281501450843634251]] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[bytes_in > \[16002960716282089759, 17281501450843634251\]\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     bytes_in:ul
 ;
@@ -308,8 +308,8 @@ from ul_logs
 | where bytes_in != [16002960716282089759, 17281501450843634251]
 | keep bytes_in
 ;
-warning:Line 2:9: evaluation of [bytes_in != [16002960716282089759, 17281501450843634251]] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 2:9: evaluation of \[bytes_in != \[16002960716282089759, 17281501450843634251\]\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:9: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
     bytes_in:ul
 ;

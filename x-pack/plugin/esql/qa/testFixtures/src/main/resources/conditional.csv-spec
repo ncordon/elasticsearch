@@ -101,8 +101,8 @@ FROM employees
 | WHERE emp_no == 10010
 | EVAL foo = CASE(still_hired, "still", is_rehired, "rehired", "not")
 | KEEP still_hired, is_rehired, foo;
-warning:Line 3:41: evaluation of [is_rehired] failed, treating result as false. Only first 20 failures recorded.
-warning:Line 3:41: java.lang.IllegalArgumentException: CASE expects a single-valued boolean
+warningRegex:Line 3:41: evaluation of \[is_rehired\] failed, treating result as false\. Only first 20 failures recorded\.
+warningRegex:Line 3:41: java\.lang\.IllegalArgumentException: CASE expects a single-valued boolean
 
 still_hired:boolean |     is_rehired:boolean     | foo:keyword
               false | [false, false, true, true] | not
@@ -112,8 +112,8 @@ caseOnConstantMvFalseTrue
 required_capability: case_mv
 
 ROW foo = CASE([false, true], "a", "b");
-warning:Line 1:16: evaluation of [[false, true]] failed, treating result as false. Only first 20 failures recorded.
-warning:Line 1:16: java.lang.IllegalArgumentException: CASE expects a single-valued boolean
+warningRegex:Line 1:16: evaluation of \[\[false, true\]\] failed, treating result as false\. Only first 20 failures recorded\.
+warningRegex:Line 1:16: java\.lang\.IllegalArgumentException: CASE expects a single-valued boolean
 
 foo:keyword
 b
@@ -123,8 +123,8 @@ caseOnConstantMvTrueTrue
 required_capability: case_mv
 
 ROW foo = CASE([true, true], "a", "b");
-warning:Line 1:16: evaluation of [[true, true]] failed, treating result as false. Only first 20 failures recorded.
-warning:Line 1:16: java.lang.IllegalArgumentException: CASE expects a single-valued boolean
+warningRegex:Line 1:16: evaluation of \[\[true, true\]\] failed, treating result as false\. Only first 20 failures recorded\.
+warningRegex:Line 1:16: java\.lang\.IllegalArgumentException: CASE expects a single-valued boolean
 
 foo:keyword
 b
@@ -134,8 +134,8 @@ caseOnMvSliceMv
 required_capability: case_mv
 
 ROW foo = [true, false, false] | EVAL foo = CASE(MV_SLICE(foo, 0, 1), "a", "b");
-warning:Line 1:50: evaluation of [MV_SLICE(foo, 0, 1)] failed, treating result as false. Only first 20 failures recorded.
-warning:Line 1:50: java.lang.IllegalArgumentException: CASE expects a single-valued boolean
+warningRegex:Line 1:50: evaluation of \[MV_SLICE\(foo, 0, 1\)\] failed, treating result as false\. Only first 20 failures recorded\.
+warningRegex:Line 1:50: java\.lang\.IllegalArgumentException: CASE expects a single-valued boolean
 
 foo:keyword
 b
@@ -154,8 +154,8 @@ caseOnConvertMvSliceMv
 required_capability: case_mv
 
 ROW foo = ["true", "false", "false"] | EVAL foo = CASE(MV_SLICE(foo::BOOLEAN, 0, 1), "a", "b");
-warning:Line 1:56: evaluation of [MV_SLICE(foo::BOOLEAN, 0, 1)] failed, treating result as false. Only first 20 failures recorded.
-warning:Line 1:56: java.lang.IllegalArgumentException: CASE expects a single-valued boolean
+warningRegex:Line 1:56: evaluation of \[MV_SLICE\(foo::BOOLEAN, 0, 1\)\] failed, treating result as false\. Only first 20 failures recorded\.
+warningRegex:Line 1:56: java\.lang\.IllegalArgumentException: CASE expects a single-valued boolean
 
 foo:keyword
 b
@@ -223,8 +223,8 @@ nullOnMultivaluesMathOperation
 required_capability: disable_nullable_opts
 
 ROW a = 5, b = [ 1, 2 ]| EVAL sum = a + b| LIMIT 1 |  WHERE sum IS NULL;
-warning:Line 1:37: evaluation of [a + b] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:37: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 1:37: evaluation of \[a \+ b\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:37: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 a:integer | b:integer | sum:integer
 5         | [1, 2]    | null
@@ -235,8 +235,8 @@ notNullOnMultivaluesMathOperation
 required_capability: disable_nullable_opts
 
 ROW a = 5, b = [ 1, 2 ]| EVAL sum = a + b| LIMIT 1 |  WHERE sum IS NOT NULL;
-warning:Line 1:37: evaluation of [a + b] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:37: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 1:37: evaluation of \[a \+ b\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:37: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 a:integer | b:integer | sum:integer
 ;
@@ -246,8 +246,8 @@ nullOnMultivaluesComparisonOperation
 required_capability: disable_nullable_opts
 
 ROW a = 5, b = [ 1, 2 ]| EVAL same = a == b| LIMIT 1 |  WHERE same IS NULL;
-warning:Line 1:38: evaluation of [a == b] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:38: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 1:38: evaluation of \[a == b\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:38: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 
 a:integer | b:integer | same:boolean
@@ -259,8 +259,8 @@ notNullOnMultivaluesComparisonOperation
 required_capability: disable_nullable_opts
 
 ROW a = 5, b = [ 1, 2 ]| EVAL same = a == b| LIMIT 1 |  WHERE same IS NOT NULL;
-warning:Line 1:38: evaluation of [a == b] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:38: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 1:38: evaluation of \[a == b\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:38: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 a:integer | b:integer | same:boolean
 ;
@@ -270,8 +270,8 @@ notNullOnMultivaluesComparisonOperationWithPartialMatch
 required_capability: disable_nullable_opts
 
 ROW a = 5, b = [ 5, 2 ]| EVAL same = a == b| LIMIT 1 |  WHERE same IS NOT NULL;
-warning:Line 1:38: evaluation of [a == b] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:38: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 1:38: evaluation of \[a == b\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:38: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 a:integer | b:integer | same:boolean
 ;

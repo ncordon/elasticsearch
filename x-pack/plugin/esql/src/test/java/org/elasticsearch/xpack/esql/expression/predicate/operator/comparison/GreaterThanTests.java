@@ -10,13 +10,16 @@ package org.elasticsearch.xpack.esql.expression.predicate.operator.comparison;
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 
+import org.apache.lucene.document.InetAddressPoint;
 import org.apache.lucene.util.BytesRef;
+import org.elasticsearch.common.network.InetAddresses;
 import org.elasticsearch.xpack.esql.core.expression.Expression;
 import org.elasticsearch.xpack.esql.core.tree.Source;
 import org.elasticsearch.xpack.esql.core.type.DataType;
 import org.elasticsearch.xpack.esql.core.util.NumericUtils;
 import org.elasticsearch.xpack.esql.expression.function.AbstractScalarFunctionTestCase;
 import org.elasticsearch.xpack.esql.expression.function.TestCaseSupplier;
+import org.elasticsearch.xpack.versionfield.Version;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -172,7 +175,67 @@ public class GreaterThanTests extends AbstractScalarFunctionTestCase {
             )
         );
 
+        // Comparison against a multivalued constant literal (e.g. `field > [1, 2, 3]`) can't be pushed down and
+        // must fall back to the generic per-row evaluator, which flags the multivalued literal on every row.
+        addMultiValueConstantCase(suppliers, DataType.INTEGER, "GreaterThanIntsEvaluator", 42, List.of(1, 2, 3));
+        addMultiValueConstantCase(
+            suppliers,
+            DataType.KEYWORD,
+            "GreaterThanBytesRefEvaluator",
+            new BytesRef("m"),
+            List.of(new BytesRef("a"), new BytesRef("z"))
+        );
+        addMultiValueConstantCase(suppliers, DataType.DATE_NANOS, "GreaterThanLongsEvaluator", 1_500_000_000L, List.of(1L, 2L));
+        addMultiValueConstantCase(suppliers, DataType.LONG, "GreaterThanLongsEvaluator", 42L, List.of(1L, 2L));
+        addMultiValueConstantCase(
+            suppliers,
+            DataType.VERSION,
+            "GreaterThanBytesRefEvaluator",
+            new Version("1.2.3").toBytesRef(),
+            List.of(new Version("1.2.3.4").toBytesRef(), new Version("127.0.0.1").toBytesRef())
+        );
+        addMultiValueConstantCase(
+            suppliers,
+            DataType.UNSIGNED_LONG,
+            "GreaterThanLongsEvaluator",
+            NumericUtils.asLongUnsigned(BigInteger.TEN),
+            List.of(NumericUtils.asLongUnsigned(BigInteger.ONE), NumericUtils.asLongUnsigned(BigInteger.TWO))
+        );
+        addMultiValueConstantCase(
+            suppliers,
+            DataType.IP,
+            "GreaterThanBytesRefEvaluator",
+            new BytesRef(InetAddressPoint.encode(InetAddresses.forString("127.0.0.1"))),
+            List.of(
+                new BytesRef(InetAddressPoint.encode(InetAddresses.forString("1.2.3.4"))),
+                new BytesRef(InetAddressPoint.encode(InetAddresses.forString("127.0.0.1")))
+            )
+        );
+
         return parameterSuppliersFromTypedDataWithDefaultChecks(true, suppliers);
+    }
+
+    static <T> void addMultiValueConstantCase(
+        List<TestCaseSupplier> suppliers,
+        DataType type,
+        String evaluatorName,
+        T lhsValue,
+        List<T> rhsValues
+    ) {
+        suppliers.add(
+            new TestCaseSupplier("<" + type + " field>, <multivalued " + type + " constant>", List.of(type, type), () -> {
+                return new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(lhsValue, type, "lhs"),
+                        new TestCaseSupplier.TypedData(rhsValues, type, "rhs").forceLiteral()
+                    ),
+                    org.hamcrest.Matchers.containsString(evaluatorName),
+                    DataType.BOOLEAN,
+                    org.hamcrest.Matchers.nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning("Line 1:1: java.lang.IllegalArgumentException: single-value function encountered multi-value");
+            })
+        );
     }
 
     @Override

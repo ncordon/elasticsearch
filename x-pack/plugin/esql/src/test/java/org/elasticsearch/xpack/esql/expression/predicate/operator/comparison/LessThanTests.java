@@ -10,7 +10,9 @@ package org.elasticsearch.xpack.esql.expression.predicate.operator.comparison;
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 
+import org.apache.lucene.document.InetAddressPoint;
 import org.apache.lucene.util.BytesRef;
+import org.elasticsearch.common.network.InetAddresses;
 import org.elasticsearch.xpack.esql.core.expression.Expression;
 import org.elasticsearch.xpack.esql.core.tree.Source;
 import org.elasticsearch.xpack.esql.core.type.DataType;
@@ -170,6 +172,28 @@ public class LessThanTests extends AbstractScalarFunctionTestCase {
                 List.of(),
                 DataType.BOOLEAN
             )
+        );
+
+        // Comparison against a multivalued constant literal (e.g. `field < [1, 2, 3]::ip`) can't be pushed down and
+        // must fall back to the generic per-row evaluator, which flags the multivalued literal on every row.
+        suppliers.add(
+            new TestCaseSupplier("<ip field>, <multivalued ip constant>", List.of(DataType.IP, DataType.IP), () -> {
+                BytesRef lhs = new BytesRef(InetAddressPoint.encode(InetAddresses.forString("127.0.0.1")));
+                List<BytesRef> rhs = List.of(
+                    new BytesRef(InetAddressPoint.encode(InetAddresses.forString("1.2.3.4"))),
+                    new BytesRef(InetAddressPoint.encode(InetAddresses.forString("127.0.0.1")))
+                );
+                return new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(lhs, DataType.IP, "lhs"),
+                        new TestCaseSupplier.TypedData(rhs, DataType.IP, "rhs").forceLiteral()
+                    ),
+                    org.hamcrest.Matchers.containsString("LessThanBytesRefEvaluator"),
+                    DataType.BOOLEAN,
+                    org.hamcrest.Matchers.nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning("Line 1:1: java.lang.IllegalArgumentException: single-value function encountered multi-value");
+            })
         );
 
         return parameterSuppliersFromTypedDataWithDefaultChecks(true, suppliers);

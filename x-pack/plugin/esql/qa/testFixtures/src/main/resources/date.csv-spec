@@ -124,8 +124,8 @@ ROW string = ["1953-09-02T00:00:00.000Z", "1964-06-02T00:00:00.000Z", "1964-06-0
 | EVAL datetime = TO_DATETIME(string)
 // end::to_datetime-str[]
 ;
-warning:Line 2:19: evaluation of [TO_DATETIME(string)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:19: java.lang.IllegalArgumentException: failed to parse date field [1964-06-02 00:00:00] with format [strict_date_optional_time]
+warningRegex:Line 2:19: evaluation of \[TO_DATETIME\(string\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:19: java\.lang\.IllegalArgumentException: failed to parse date field \[1964-06-02 00:00:00\] with format \[strict_date_optional_time\]
 
 // tag::to_datetime-str-result[]
 string:keyword                                          |datetime:date
@@ -298,9 +298,9 @@ FROM employees
 | LIMIT 2
 ;
 
-warning:Line 5:16: evaluation of [DATE_DIFF(first_name, date, date)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 5:16: java.lang.IllegalArgumentException: A value of [YEAR, QUARTER, MONTH, DAYOFYEAR, DAY, WEEK, WEEKDAY, HOUR, MINUTE, SECOND, MILLISECOND, MICROSECOND, NANOSECOND] or their aliases is required; received [Alejandro]
-warning:Line 5:16: java.lang.IllegalArgumentException: Received value [Mary] is not valid date part to add; did you mean [day]? 
+warningRegex:Line 5:16: evaluation of \[DATE_DIFF\(first_name, date, date\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 5:16: java\.lang\.IllegalArgumentException: A value of \[YEAR, QUARTER, MONTH, DAYOFYEAR, DAY, WEEK, WEEKDAY, HOUR, MINUTE, SECOND, MILLISECOND, MICROSECOND, NANOSECOND\] or their aliases is required; received \[Alejandro\]
+warningRegex:Line 5:16: java\.lang\.IllegalArgumentException: Received value \[Mary\] is not valid date part to add; did you mean \[day\]\?
 
 date:date                | dd_ms:integer
 2023-12-02T11:00:00.000Z | null
@@ -426,8 +426,8 @@ b:datetime
 
 evalDateParseWrongDate
 row a = "2023-02-01 foo" | eval b = date_parse("yyyy-MM-dd", a) | keep b;
-warning:Line 1:37: evaluation of [date_parse(\"yyyy-MM-dd\", a)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:37: java.lang.IllegalArgumentException: failed to parse date field [2023-02-01 foo] with format [yyyy-MM-dd]
+warningRegex:Line 1:37: evaluation of \[date_parse\(\\"yyyy-MM-dd\\", a\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:37: java\.lang\.IllegalArgumentException: failed to parse date field \[2023-02-01 foo\] with format \[yyyy-MM-dd\]
 
 b:datetime
 null
@@ -436,24 +436,24 @@ null
 evalDateParseInvalidDate
 required_capability: date_time_exceptions_handled
 row a = "2026-02-29 foo" | eval b = date_parse("yyyy-MM-dd", a) | keep b;
-warning:Line 1:37: evaluation of [date_parse(\"yyyy-MM-dd\", a)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:37: java.lang.IllegalArgumentException: failed to parse date field [2026-02-29 foo] with format [yyyy-MM-dd]
+warningRegex:Line 1:37: evaluation of \[date_parse\(\\"yyyy-MM-dd\\", a\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:37: java\.lang\.IllegalArgumentException: failed to parse date field \[2026-02-29 foo\] with format \[yyyy-MM-dd\]
 b:datetime
 null
 ;
 
 evalDateParseNotMatching
 row a = "2023-02-01" | eval b = date_parse("yyyy-MM", a) | keep b;
-warning:Line 1:33: evaluation of [date_parse(\"yyyy-MM\", a)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:33: java.lang.IllegalArgumentException: failed to parse date field [2023-02-01] with format [yyyy-MM]
+warningRegex:Line 1:33: evaluation of \[date_parse\(\\"yyyy-MM\\", a\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:33: java\.lang\.IllegalArgumentException: failed to parse date field \[2023-02-01\] with format \[yyyy-MM\]
 b:datetime
 null
 ;
 
 evalDateParseNotMatching2
 row a = "2023-02-01" | eval b = date_parse("yyyy-MM-dd HH:mm:ss", a) | keep b;
-warning:Line 1:33: evaluation of [date_parse(\"yyyy-MM-dd HH:mm:ss\", a)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:33: java.lang.IllegalArgumentException: failed to parse date field [2023-02-01] with format [yyyy-MM-dd HH:mm:ss]
+warningRegex:Line 1:33: evaluation of \[date_parse\(\\"yyyy-MM-dd HH:mm:ss\\", a\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:33: java\.lang\.IllegalArgumentException: failed to parse date field \[2023-02-01\] with format \[yyyy-MM-dd HH:mm:ss\]
 
 b:datetime
 null
@@ -954,8 +954,8 @@ row dt = to_dt(9223372036854775807)
 | eval plus = dt + 1 day
 | keep plus;
 
-warning:Line 2:15: evaluation of [dt + 1 day] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:15: java.lang.ArithmeticException: long overflow
+warningRegex:Line 2:15: evaluation of \[dt \+ 1 day\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:15: java\.lang\.ArithmeticException: long overflow
 
 plus:datetime
 null
@@ -966,8 +966,8 @@ row dt = to_dt(0)
 | eval plus = dt + 2147483647 years
 | keep plus;
 
-warning:Line 2:15: evaluation of [dt + 2147483647 years] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:15: java.time.DateTimeException: Invalid value for Year (valid values -999999999 - 999999999): 2147485617
+warningRegex:Line 2:15: evaluation of \[dt \+ 2147483647 years\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:15: java\.time\.DateTimeException: Invalid value for Year \(valid values -999999999 - 999999999\): 2147485617
 
 plus:datetime
 null
@@ -1707,8 +1707,8 @@ null
 evalInvalidDate
 required_capability: date_time_exceptions_handled
 ROW x = ["2026-04-31"]::DATE | KEEP x;
-warning:Line 1:9: evaluation of [[\"2026-04-31\"]::DATE] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:9: java.lang.IllegalArgumentException: Invalid date 'APRIL 31'
+warningRegex:Line 1:9: evaluation of \[\[\\"2026-04-31\\"\]::DATE\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:9: java\.lang\.IllegalArgumentException: Invalid date 'APRIL 31'
 x:datetime
 null
 ;
@@ -1716,8 +1716,8 @@ null
 evalInvalidDateNanos
 required_capability: date_time_exceptions_handled
 ROW x = ["2026-04-31"]::DATE_NANOS | KEEP x;
-warning:Line 1:9: evaluation of [[\"2026-04-31\"]::DATE_NANOS] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:9: java.lang.IllegalArgumentException: Invalid date 'APRIL 31'
+warningRegex:Line 1:9: evaluation of \[\[\\"2026-04-31\\"\]::DATE_NANOS\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:9: java\.lang\.IllegalArgumentException: Invalid date 'APRIL 31'
 x:date_nanos
 null
 ;
@@ -1725,8 +1725,8 @@ null
 evalInvalidDateTime
 required_capability: date_time_exceptions_handled
 ROW x = ["2026-04-31"]::DATETIME | KEEP x;
-warning:Line 1:9: evaluation of [[\"2026-04-31\"]::DATETIME] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:9: java.lang.IllegalArgumentException: Invalid date 'APRIL 31'
+warningRegex:Line 1:9: evaluation of \[\[\\"2026-04-31\\"\]::DATETIME\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:9: java\.lang\.IllegalArgumentException: Invalid date 'APRIL 31'
 x:datetime
 null
 ;

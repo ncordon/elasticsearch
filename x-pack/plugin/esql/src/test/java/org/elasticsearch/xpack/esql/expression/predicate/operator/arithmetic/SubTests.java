@@ -45,6 +45,7 @@ import static org.elasticsearch.xpack.esql.expression.function.TestCaseSupplier.
 import static org.elasticsearch.xpack.esql.expression.function.TestCaseSupplier.randomDenseVector;
 import static org.elasticsearch.xpack.esql.expression.predicate.operator.arithmetic.DenseVectorTestCaseHelper.denseVectorScalarCases;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 public class SubTests extends AbstractConfigurationFunctionTestCase {
@@ -170,6 +171,28 @@ public class SubTests extends AbstractConfigurationFunctionTestCase {
                 startsWith("SubDateNanosEvaluator[dateNanos=Attribute[channel=0], temporalAmount="),
                 (l, r) -> List.of(),
                 true
+            )
+        );
+
+        // Deterministic boundary case: the random dateCases()/datePeriodCases() cross-product above restricts dates
+        // to [1985-01-01, max], structurally excluding the pre-1970 underflow this DateTimeException guards against.
+        suppliers.add(
+            new TestCaseSupplier(
+                "<epoch date_nanos> - <1 day>",
+                List.of(DataType.DATE_NANOS, DataType.DATE_PERIOD),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(0L, DataType.DATE_NANOS, "dateNanos"),
+                        new TestCaseSupplier.TypedData(Period.ofDays(1), DataType.DATE_PERIOD, "temporalAmount").forceLiteral()
+                    ),
+                    org.hamcrest.Matchers.containsString("SubDateNanosEvaluator"),
+                    DataType.DATE_NANOS,
+                    nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning(
+                        "Line 1:1: java.time.DateTimeException: Date nanos out of range.  Must be between "
+                            + "1970-01-01T00:00:00Z and 2262-04-11T23:47:16.854775807"
+                    )
             )
         );
 

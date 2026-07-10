@@ -104,8 +104,8 @@ string to date nanos, out of range
 required_capability: to_date_nanos
 
 ROW d = TO_DATE_NANOS("2262-04-12T00:00:00.000");
-warning:Line 1:9: evaluation of [TO_DATE_NANOS(\"2262-04-12T00:00:00.000\")] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:9: java.lang.IllegalArgumentException: date[2262-04-12T00:00:00Z] is after 2262-04-11T23:47:16.854775807 and cannot be stored in nanosecond resolution
+warningRegex:Line 1:9: evaluation of \[TO_DATE_NANOS\(\\"2262-04-12T00:00:00\.000\\"\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:9: java\.lang\.IllegalArgumentException: date\[2262-04-12T00:00:00Z\] is after 2262-04-11T23:47:16\.854775807 and cannot be stored in nanosecond resolution
 
 d:date_nanos
 null
@@ -115,8 +115,8 @@ string to date nanos, pre 1970
 required_capability: to_date_nanos
 
 ROW d = TO_DATE_NANOS("1969-04-12T00:00:00.000");
-warning:Line 1:9: evaluation of [TO_DATE_NANOS(\"1969-04-12T00:00:00.000\")] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:9: java.lang.IllegalArgumentException: date[1969-04-12T00:00:00Z] is before the epoch in 1970 and cannot be stored in nanosecond resolution 
+warningRegex:Line 1:9: evaluation of \[TO_DATE_NANOS\(\\"1969-04-12T00:00:00\.000\\"\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:9: java\.lang\.IllegalArgumentException: date\[1969-04-12T00:00:00Z\] is before the epoch in 1970 and cannot be stored in nanosecond resolution
 
 d:date_nanos
 null
@@ -146,8 +146,8 @@ required_capability: to_date_nanos
 
 ROW d = TO_DATE_NANOS(TO_LONG(-1));
 
-warning:Line 1:9: evaluation of [TO_DATE_NANOS(TO_LONG(-1))] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:9: java.lang.IllegalArgumentException: Nanosecond dates before 1970-01-01T00:00:00.000Z are not supported.
+warningRegex:Line 1:9: evaluation of \[TO_DATE_NANOS\(TO_LONG\(-1\)\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:9: java\.lang\.IllegalArgumentException: Nanosecond dates before 1970-01-01T00:00:00\.000Z are not supported\.
 d:date_nanos
 null
 ;
@@ -184,8 +184,8 @@ datetime to date nanos, with overflow
 required_capability: to_date_nanos
 
 ROW d = TO_DATE_NANOS(TO_DATETIME("2262-04-12T00:00:00.000")); 
-warning:Line 1:9: evaluation of [TO_DATE_NANOS(TO_DATETIME(\"2262-04-12T00:00:00.000\"))] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:9: java.lang.IllegalArgumentException: milliSeconds [9223372800000] are after 2262-04-11T23:47:16.854775807 and cannot be converted to nanoseconds
+warningRegex:Line 1:9: evaluation of \[TO_DATE_NANOS\(TO_DATETIME\(\\"2262-04-12T00:00:00\.000\\"\)\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:9: java\.lang\.IllegalArgumentException: milliSeconds \[9223372800000\] are after 2262-04-11T23:47:16\.854775807 and cannot be converted to nanoseconds
 
 d:date_nanos
 null
@@ -195,8 +195,8 @@ datetime to date nanos, pre 1970
 required_capability: to_date_nanos
 
 ROW d = TO_DATE_NANOS(TO_DATETIME("1969-04-12T00:00:00.000")); 
-warning:Line 1:9: evaluation of [TO_DATE_NANOS(TO_DATETIME(\"1969-04-12T00:00:00.000\"))] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 1:9: java.lang.IllegalArgumentException: milliSeconds [-22809600000] are before the epoch in 1970 and cannot be converted to nanoseconds
+warningRegex:Line 1:9: evaluation of \[TO_DATE_NANOS\(TO_DATETIME\(\\"1969-04-12T00:00:00\.000\\"\)\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 1:9: java\.lang\.IllegalArgumentException: milliSeconds \[-22809600000\] are before the epoch in 1970 and cannot be converted to nanoseconds
 
 d:date_nanos
 null
@@ -895,10 +895,10 @@ FROM date_nanos
 | SORT nn DESC;
 # NB: sorting of the MV results isn't deterministic, so we ignore ordering here
 ignoreOrder:true
-warning:Line 3:15: evaluation of [DATE_EXTRACT(\"year\", nn)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:15: java.lang.IllegalArgumentException: single-value function encountered multi-value
-warning:Line 3:46: evaluation of [DATE_EXTRACT(\"nano_of_second\", nn)] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 3:46: java.lang.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 3:15: evaluation of \[DATE_EXTRACT\(\\"year\\", nn\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:15: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
+warningRegex:Line 3:46: evaluation of \[DATE_EXTRACT\(\\"nano_of_second\\", nn\)\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 3:46: java\.lang\.IllegalArgumentException: single-value function encountered multi-value
 
 nn:date_nanos                  | year:long | ns:long
 2023-10-23T13:55:01.543123456Z | 2023      | 543123456
@@ -1521,8 +1521,8 @@ row dt = to_date_nanos(9223372036854775807)
 | eval plus = dt + 1 day
 | keep plus;
 
-warning:Line 2:15: evaluation of [dt + 1 day] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:15: java.time.DateTimeException: Date nanos out of range.  Must be between 1970-01-01T00:00:00Z and 2262-04-11T23:47:16.854775807
+warningRegex:Line 2:15: evaluation of \[dt \+ 1 day\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:15: java\.time\.DateTimeException: Date nanos out of range\.  Must be between 1970-01-01T00:00:00Z and 2262-04-11T23:47:16\.854775807
 plus:date_nanos
 null
 ;
@@ -1534,8 +1534,8 @@ row dt = to_date_nanos(0::long)
 | eval minus = dt - 1 day
 | keep minus;
 
-warning:Line 2:16: evaluation of [dt - 1 day] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:16: java.time.DateTimeException: Date nanos out of range.  Must be between 1970-01-01T00:00:00Z and 2262-04-11T23:47:16.854775807
+warningRegex:Line 2:16: evaluation of \[dt - 1 day\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:16: java\.time\.DateTimeException: Date nanos out of range\.  Must be between 1970-01-01T00:00:00Z and 2262-04-11T23:47:16\.854775807
 minus:date_nanos
 null
 ;
@@ -1547,8 +1547,8 @@ row dt = to_date_nanos(0::long)
 | eval plus = dt + 2147483647 years
 | keep plus;
 
-warning:Line 2:15: evaluation of [dt + 2147483647 years] failed, treating result as null. Only first 20 failures recorded.
-warning:Line 2:15: java.time.DateTimeException: Invalid value for Year (valid values -999999999 - 999999999): 2147485617
+warningRegex:Line 2:15: evaluation of \[dt \+ 2147483647 years\] failed, treating result as null\. Only first 20 failures recorded\.
+warningRegex:Line 2:15: java\.time\.DateTimeException: Invalid value for Year \(valid values -999999999 - 999999999\): 2147485617
 
 plus:date_nanos
 null

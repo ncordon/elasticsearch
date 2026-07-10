@@ -319,6 +319,41 @@ public class EqualsTests extends AbstractScalarFunctionTestCase {
             })
         );
 
+        // Comparison against a multivalued constant literal (e.g. `field == [1, 2, 3]`) can't be pushed down and
+        // must fall back to the generic per-row evaluator, which flags the multivalued literal on every row.
+        suppliers.add(
+            new TestCaseSupplier("<boolean field>, <multivalued boolean constant>", List.of(DataType.BOOLEAN, DataType.BOOLEAN), () -> {
+                boolean lhs = randomBoolean();
+                List<Boolean> rhs = List.of(true, false);
+                return new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(lhs, DataType.BOOLEAN, "lhs"),
+                        new TestCaseSupplier.TypedData(rhs, DataType.BOOLEAN, "rhs").forceLiteral()
+                    ),
+                    org.hamcrest.Matchers.containsString("EqualsBoolsEvaluator"),
+                    DataType.BOOLEAN,
+                    org.hamcrest.Matchers.nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning("Line 1:1: java.lang.IllegalArgumentException: single-value function encountered multi-value");
+            })
+        );
+        suppliers.add(
+            new TestCaseSupplier("<double field>, <multivalued double constant>", List.of(DataType.DOUBLE, DataType.DOUBLE), () -> {
+                double lhs = randomDouble();
+                List<Double> rhs = List.of(1.0, 2.0, 3.0);
+                return new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(lhs, DataType.DOUBLE, "lhs"),
+                        new TestCaseSupplier.TypedData(rhs, DataType.DOUBLE, "rhs").forceLiteral()
+                    ),
+                    org.hamcrest.Matchers.containsString("EqualsDoublesEvaluator"),
+                    DataType.BOOLEAN,
+                    org.hamcrest.Matchers.nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning("Line 1:1: java.lang.IllegalArgumentException: single-value function encountered multi-value");
+            })
+        );
+
         return parameterSuppliersFromTypedDataWithDefaultChecks(true, suppliers);
     }
 

@@ -10,10 +10,15 @@ import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 
 import org.apache.lucene.util.BytesRef;
+import org.elasticsearch.compute.data.Block;
 import org.elasticsearch.compute.data.LongRangeBlockBuilder;
+import org.elasticsearch.compute.data.Page;
+import org.elasticsearch.compute.expression.ExpressionEvaluator;
 import org.elasticsearch.geo.GeometryTestUtils;
 import org.elasticsearch.geo.ShapeTestUtils;
 import org.elasticsearch.xpack.esql.core.expression.Expression;
+import org.elasticsearch.xpack.esql.core.expression.FieldAttribute;
+import org.elasticsearch.xpack.esql.core.expression.Literal;
 import org.elasticsearch.xpack.esql.core.tree.Source;
 import org.elasticsearch.xpack.esql.core.type.DataType;
 import org.elasticsearch.xpack.esql.expression.function.AbstractFunctionTestCase;
@@ -34,9 +39,11 @@ import static org.elasticsearch.xpack.esql.core.type.DataType.GEO_POINT;
 import static org.elasticsearch.xpack.esql.core.type.DataType.GEO_SHAPE;
 import static org.elasticsearch.xpack.esql.core.util.SpatialCoordinateTypes.CARTESIAN;
 import static org.elasticsearch.xpack.esql.core.util.SpatialCoordinateTypes.GEO;
+import static org.elasticsearch.compute.data.BlockUtils.toJavaObject;
 import static org.elasticsearch.xpack.esql.expression.function.DocsV3Support.renderNegatedOperator;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.nullValue;
 
 public class InTests extends AbstractFunctionTestCase {
     public InTests(@Name("TestCase") Supplier<TestCaseSupplier.TestCase> testCaseSupplier) {
@@ -55,6 +62,30 @@ public class InTests extends AbstractFunctionTestCase {
             }
         }
         return parameterSuppliersFromTypedData(suppliers);
+    }
+
+    /**
+     * A single candidate that is itself a multivalued constant literal (e.g. {@code field IN ([1, 2, 3])}) can't be
+     * pushed down and must fall back to the generic per-row evaluator, which flags the multivalued literal on every
+     * row. {@code InTests} doesn't run its cases through {@link AbstractFunctionTestCase#evaluator}-based evaluation
+     * (only serialization), so this is asserted directly rather than via a {@link TestCaseSupplier} case.
+     */
+    public void testMultiValueConstantCandidateProducesWarning() {
+        FieldAttribute field = field("field", DataType.DOUBLE);
+        Literal candidate = new Literal(TestCaseSupplier.TEST_SOURCE, List.of(1.0, 2.0, 3.0), DataType.DOUBLE);
+        In in = new In(TestCaseSupplier.TEST_SOURCE, field, List.of(candidate));
+        try (ExpressionEvaluator evaluator = evaluator(in).get(driverContext())) {
+            Page row = row(List.of(2.0));
+            try (Block block = evaluator.eval(row)) {
+                assertThat(toJavaObject(block, 0), nullValue());
+            } finally {
+                row.releaseBlocks();
+            }
+        }
+        assertWarnings(
+            "Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.",
+            "Line 1:1: java.lang.IllegalArgumentException: single-value function encountered multi-value"
+        );
     }
 
     private static void booleans(List<TestCaseSupplier> suppliers, int items) {

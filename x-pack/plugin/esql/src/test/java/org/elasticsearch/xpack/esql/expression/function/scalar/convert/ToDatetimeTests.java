@@ -90,6 +90,51 @@ public class ToDatetimeTests extends AbstractConfigurationFunctionTestCase {
                 DataType.KEYWORD
             )
         ).build(suppliers);
+        // A syntactically valid date string that fails calendar validation (April only has 30 days) throws a
+        // java.time.DateTimeException with a different message shape than a plain format mismatch.
+        suppliers.add(
+            new TestCaseSupplier("<calendar-invalid date string>", List.of(DataType.KEYWORD), () -> new TestCaseSupplier.TestCase(
+                List.of(new TestCaseSupplier.TypedData("2026-04-31", DataType.KEYWORD, "source")),
+                "ToDatetimeFromStringEvaluator[in=Attribute[channel=0], formatter=format[strict_date_optional_time] locale[]]",
+                DataType.DATETIME,
+                org.hamcrest.Matchers.nullValue()
+            ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                .withWarning("Line 1:1: java.lang.IllegalArgumentException: Invalid date 'APRIL 31'")
+            )
+        );
+        // A multivalued field is evaluated per-element: a failing element is dropped (with a warning) while the
+        // other, valid elements are still returned, rather than nulling the whole row.
+        suppliers.add(
+            new TestCaseSupplier(
+                "<multivalued date string, partial failure>",
+                List.of(DataType.KEYWORD),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(
+                            List.of(
+                                new BytesRef("1953-09-02T00:00:00.000Z"),
+                                new BytesRef("1964-06-02T00:00:00.000Z"),
+                                new BytesRef("1964-06-02 00:00:00")
+                            ),
+                            DataType.KEYWORD,
+                            "source"
+                        )
+                    ),
+                    "ToDatetimeFromStringEvaluator[in=Attribute[channel=0], formatter=format[strict_date_optional_time] locale[]]",
+                    DataType.DATETIME,
+                    org.hamcrest.Matchers.equalTo(
+                        List.of(
+                            DEFAULT_DATE_TIME_FORMATTER.parseMillis("1953-09-02T00:00:00.000Z"),
+                            DEFAULT_DATE_TIME_FORMATTER.parseMillis("1964-06-02T00:00:00.000Z")
+                        )
+                    )
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning(
+                        "Line 1:1: java.lang.IllegalArgumentException: failed to parse date field [1964-06-02 00:00:00] "
+                            + "with format [strict_date_optional_time]"
+                    )
+            )
+        );
         suppliers = TestCaseSupplier.mapTestCases(
             suppliers,
             tc -> tc.withConfiguration(TEST_SOURCE, configurationForTimezone(ZoneOffset.UTC))

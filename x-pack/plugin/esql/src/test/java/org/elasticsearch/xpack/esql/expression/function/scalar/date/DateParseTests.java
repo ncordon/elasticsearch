@@ -165,6 +165,65 @@ public class DateParseTests extends AbstractConfigurationFunctionTestCase {
                     )
             )
         );
+        // Trailing text after an otherwise-valid-looking date prefix (here, one that would also be calendar-invalid)
+        // is a parse mismatch, not a calendar-validity error: the formatter fails on the unconsumed " foo" before
+        // ever reaching leap-year validation, producing the generic mismatch message rather than the calendar one.
+        cases.add(
+            new TestCaseSupplier(
+                List.of(DataType.KEYWORD, DataType.KEYWORD),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(new BytesRef("yyyy-MM-dd"), DataType.KEYWORD, "first"),
+                        new TestCaseSupplier.TypedData(new BytesRef("2026-02-29 foo"), DataType.KEYWORD, "second")
+                    ),
+                    startsWith("DateParseEvaluator[val=Attribute[channel=1], formatter=Attribute[channel=0], zoneId="),
+                    DataType.DATETIME,
+                    is(nullValue())
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning(
+                        "Line 1:1: java.lang.IllegalArgumentException: "
+                            + "failed to parse date field [2026-02-29 foo] with format [yyyy-MM-dd]"
+                    )
+            )
+        );
+        // Pattern shorter than the input: trailing input characters are left unconsumed.
+        cases.add(
+            new TestCaseSupplier(
+                List.of(DataType.KEYWORD, DataType.KEYWORD),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(new BytesRef("yyyy-MM"), DataType.KEYWORD, "first"),
+                        new TestCaseSupplier.TypedData(new BytesRef("2023-02-01"), DataType.KEYWORD, "second")
+                    ),
+                    startsWith("DateParseEvaluator[val=Attribute[channel=1], formatter=Attribute[channel=0], zoneId="),
+                    DataType.DATETIME,
+                    is(nullValue())
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning(
+                        "Line 1:1: java.lang.IllegalArgumentException: "
+                            + "failed to parse date field [2023-02-01] with format [yyyy-MM]"
+                    )
+            )
+        );
+        // Pattern requires more fields than the input supplies.
+        cases.add(
+            new TestCaseSupplier(
+                List.of(DataType.KEYWORD, DataType.KEYWORD),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(new BytesRef("yyyy-MM-dd HH:mm:ss"), DataType.KEYWORD, "first"),
+                        new TestCaseSupplier.TypedData(new BytesRef("2023-02-01"), DataType.KEYWORD, "second")
+                    ),
+                    startsWith("DateParseEvaluator[val=Attribute[channel=1], formatter=Attribute[channel=0], zoneId="),
+                    DataType.DATETIME,
+                    is(nullValue())
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning(
+                        "Line 1:1: java.lang.IllegalArgumentException: "
+                            + "failed to parse date field [2023-02-01] with format [yyyy-MM-dd HH:mm:ss]"
+                    )
+            )
+        );
         cases = anyNullIsNull(true, cases);
 
         for (DataType dateType : List.of(DataType.KEYWORD, DataType.TEXT)) {

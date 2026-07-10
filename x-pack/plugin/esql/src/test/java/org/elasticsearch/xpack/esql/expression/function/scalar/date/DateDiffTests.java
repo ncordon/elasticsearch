@@ -14,6 +14,7 @@ import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import org.apache.lucene.tests.util.TimeUnits;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.time.DateUtils;
+import org.elasticsearch.xpack.esql.core.InvalidArgumentException;
 import org.elasticsearch.xpack.esql.core.expression.Expression;
 import org.elasticsearch.xpack.esql.core.tree.Source;
 import org.elasticsearch.xpack.esql.core.type.DataType;
@@ -136,6 +137,30 @@ public class DateDiffTests extends AbstractConfigurationFunctionTestCase {
                 "2023-12-04T10:20:00Z",
                 "nanoseconds",
                 "Line 1:1: org.elasticsearch.xpack.esql.core.InvalidArgumentException: [300000000000] out of [integer] range"
+            )
+        );
+        // A non-literal (field-driven) unit that doesn't resolve to any recognized date part at all. When the unit
+        // is instead a literal (as in testFold, which folds all arguments to literals), the invalid unit name is
+        // caught eagerly at evaluator-build time rather than deferred to a per-row warning.
+        suppliers.addAll(
+            makeSuppliersForWarningWithFolding(
+                "2023-12-04T10:15:00Z",
+                "2023-12-04T10:20:00Z",
+                "Alejandro",
+                "Line 1:1: java.lang.IllegalArgumentException: A value of [YEAR, QUARTER, MONTH, DAYOFYEAR, DAY, WEEK, WEEKDAY, "
+                    + "HOUR, MINUTE, SECOND, MILLISECOND, MICROSECOND, NANOSECOND] or their aliases is required; received [Alejandro]",
+                "invalid unit format for [source]: A value of [YEAR, QUARTER, MONTH, DAYOFYEAR, DAY, WEEK, WEEKDAY, HOUR, MINUTE, "
+                    + "SECOND, MILLISECOND, MICROSECOND, NANOSECOND] or their aliases is required; received [Alejandro]"
+            )
+        );
+        // A non-literal unit that's close enough to a real one to trigger a "did you mean" suggestion.
+        suppliers.addAll(
+            makeSuppliersForWarningWithFolding(
+                "2023-12-04T10:15:00Z",
+                "2023-12-04T10:20:00Z",
+                "Mary",
+                "Line 1:1: java.lang.IllegalArgumentException: Received value [Mary] is not valid date part to add; did you mean [day]?",
+                "invalid unit format for [source]: Received value [Mary] is not valid date part to add; did you mean [day]?"
             )
         );
 
@@ -337,6 +362,31 @@ public class DateDiffTests extends AbstractConfigurationFunctionTestCase {
                         ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
                             .withWarning(warning)
                     )
+                )
+            )
+            .toList();
+    }
+
+    /**
+     * Like {@link #makeSuppliersForWarning}, but for a unit that's invalid as a *unit name* (not merely one that
+     * causes a runtime overflow): when such a unit is a compile-time literal, {@code DateDiff} rejects it eagerly
+     * while building the evaluator (an exception, not a per-row warning) rather than deferring to evaluation. Since
+     * {@code testFold} folds all arguments to literals, it hits that eager path and needs {@code foldingException}
+     * instead of {@code warning}.
+     */
+    private static List<TestCaseSupplier> makeSuppliersForWarningWithFolding(
+        String startTimestampString,
+        String endTimestampString,
+        String unit,
+        String warning,
+        String foldingExceptionMessage
+    ) {
+        return makeSuppliersForWarning(startTimestampString, endTimestampString, unit, warning).stream()
+            .map(
+                supplier -> new TestCaseSupplier(
+                    supplier.name(),
+                    supplier.types(),
+                    () -> supplier.get().withFoldingException(InvalidArgumentException.class, foldingExceptionMessage)
                 )
             )
             .toList();

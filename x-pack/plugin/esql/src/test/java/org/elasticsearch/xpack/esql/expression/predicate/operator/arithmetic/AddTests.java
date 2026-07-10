@@ -229,6 +229,85 @@ public class AddTests extends AbstractConfigurationFunctionTestCase {
             )
         );
 
+        // Deterministic boundary cases: the random dateCases()/datePeriodCases() cross-product above only ever
+        // catches ArithmeticException, never reaches the extreme values needed to trigger a DateTimeException
+        // (either from a many-billion-year Period, or from AddDateNanosEvaluator's own nanosecond-range check).
+        suppliers.add(
+            new TestCaseSupplier(
+                "<max datetime> + <1 day>",
+                List.of(DataType.DATETIME, DataType.DATE_PERIOD),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(Long.MAX_VALUE, DataType.DATETIME, "datetime"),
+                        new TestCaseSupplier.TypedData(Period.ofDays(1), DataType.DATE_PERIOD, "temporalAmount").forceLiteral()
+                    ),
+                    org.hamcrest.Matchers.containsString("AddDatetimesEvaluator"),
+                    DataType.DATETIME,
+                    nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning("Line 1:1: java.lang.ArithmeticException: long overflow")
+            )
+        );
+        suppliers.add(
+            new TestCaseSupplier(
+                "<epoch datetime> + <2147483647 years>",
+                List.of(DataType.DATETIME, DataType.DATE_PERIOD),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(0L, DataType.DATETIME, "datetime"),
+                        new TestCaseSupplier.TypedData(Period.ofYears(2147483647), DataType.DATE_PERIOD, "temporalAmount")
+                            .forceLiteral()
+                    ),
+                    org.hamcrest.Matchers.containsString("AddDatetimesEvaluator"),
+                    DataType.DATETIME,
+                    nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning(
+                        "Line 1:1: java.time.DateTimeException: Invalid value for Year "
+                            + "(valid values -999999999 - 999999999): 2147485617"
+                    )
+            )
+        );
+        suppliers.add(
+            new TestCaseSupplier(
+                "<max date_nanos> + <1 day>",
+                List.of(DataType.DATE_NANOS, DataType.DATE_PERIOD),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(Long.MAX_VALUE, DataType.DATE_NANOS, "dateNanos"),
+                        new TestCaseSupplier.TypedData(Period.ofDays(1), DataType.DATE_PERIOD, "temporalAmount").forceLiteral()
+                    ),
+                    org.hamcrest.Matchers.containsString("AddDateNanosEvaluator"),
+                    DataType.DATE_NANOS,
+                    nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning(
+                        "Line 1:1: java.time.DateTimeException: Date nanos out of range.  Must be between "
+                            + "1970-01-01T00:00:00Z and 2262-04-11T23:47:16.854775807"
+                    )
+            )
+        );
+        suppliers.add(
+            new TestCaseSupplier(
+                "<epoch date_nanos> + <2147483647 years>",
+                List.of(DataType.DATE_NANOS, DataType.DATE_PERIOD),
+                () -> new TestCaseSupplier.TestCase(
+                    List.of(
+                        new TestCaseSupplier.TypedData(0L, DataType.DATE_NANOS, "dateNanos"),
+                        new TestCaseSupplier.TypedData(Period.ofYears(2147483647), DataType.DATE_PERIOD, "temporalAmount")
+                            .forceLiteral()
+                    ),
+                    org.hamcrest.Matchers.containsString("AddDateNanosEvaluator"),
+                    DataType.DATE_NANOS,
+                    nullValue()
+                ).withWarning("Line 1:1: evaluation of [source] failed, treating result as null. Only first 20 failures recorded.")
+                    .withWarning(
+                        "Line 1:1: java.time.DateTimeException: Invalid value for Year "
+                            + "(valid values -999999999 - 999999999): 2147485617"
+                    )
+            )
+        );
+
         suppliers.addAll(TestCaseSupplier.dateCases().stream().<TestCaseSupplier>mapMulti((tds, consumer) -> {
             consumer.accept(
                 new TestCaseSupplier(
