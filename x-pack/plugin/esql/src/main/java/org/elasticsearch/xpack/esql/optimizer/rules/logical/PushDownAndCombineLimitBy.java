@@ -164,4 +164,5 @@ public final class PushDownAndCombineLimitBy extends OptimizerRules.Parameterize
         LogicalPlan newChild = limitBy.child().replaceChildren(newGrandChildren);
         return limitBy.replaceChild(newChild).withDuplicated(true);
     }
+
 }
