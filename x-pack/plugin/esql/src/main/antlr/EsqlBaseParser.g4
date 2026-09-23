@@ -26,7 +26,7 @@ import Expression,
        Promql;
 
 statements
-    : setCommand* singleStatement EOF
+    : setCommand* letCommand? singleStatement EOF
     ;
 
 singleStatement
@@ -426,6 +426,14 @@ setCommand
 
 setField
     : identifier ASSIGN ( constant | mapExpression )
+    ;
+
+letCommand
+    : DEV_LET letBinding (COMMA letBinding)* SEMICOLON
+    ;
+
+letBinding
+    : identifier ASSIGN subquery
     ;
 
 mmrCommand

@@ -161,6 +161,9 @@ public class EsqlParser {
         if (parsed.settings() != null && parsed.settings().isEmpty() == false) {
             throw new ParsingException(parsed.settings().getFirst().source(), "SET statements are not allowed in views");
         }
+        if (parsed.letBindings() != null && parsed.letBindings().isEmpty() == false) {
+            throw new ParsingException(parsed.letBindings().getFirst().source(), "LET statements are not allowed in views");
+        }
         return parsed;
     }
 
