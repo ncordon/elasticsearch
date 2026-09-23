@@ -172,21 +172,19 @@ public class LetParserTests extends AbstractStatementParserTests {
         expectValidationError("LET `a:b` = (FROM idx | LIMIT 1); ROW x = 1", "must not contain");
     }
 
-    public void testLetInsideViewBodyRejected() {
+    public void testLetInsideViewBodyParsed() {
         assumeLet();
-        // parseView is called by EsqlParser, not the test parser. We verify by directly calling
-        // the parser method that backs view parsing.
+        // parseView is called by EsqlParser, not the test parser. Verify that LET is accepted
+        // in a view body and that the parsed statement carries the bindings.
         var parser = new EsqlParser(new EsqlConfig(org.elasticsearch.xpack.esql.EsqlTestUtils.TEST_FUNCTION_REGISTRY));
-        var ex = expectThrows(
-            ParsingException.class,
-            () -> parser.parseView(
-                "LET x = (FROM a | LIMIT 1); FROM x",
-                new QueryParams(),
-                new org.elasticsearch.xpack.esql.inference.InferenceSettings(org.elasticsearch.common.settings.Settings.EMPTY),
-                "my_view"
-            )
+        var stmt = parser.parseView(
+            "LET x = (FROM a | LIMIT 1); FROM x",
+            new QueryParams(),
+            new org.elasticsearch.xpack.esql.inference.InferenceSettings(org.elasticsearch.common.settings.Settings.EMPTY),
+            "my_view"
         );
-        assertThat(ex.getMessage(), containsString("LET statements are not allowed in views"));
+        assertThat(stmt.letBindings().size(), is(1));
+        assertThat(stmt.letBindings().get(0).name(), is("x"));
     }
 
     // -----------------------------------------------------------------------
