@@ -45,10 +45,10 @@ import java.util.Map;
  * cycle guard or depth limit is needed.</p>
  *
  * <h2>Wrapping</h2>
- * <p>A binding whose plan is a bare {@link UnresolvedRelation} is substituted directly
- * (pass-through); any other plan is wrapped in a {@link NamedSubquery}.
- * {@link org.elasticsearch.xpack.esql.view.ViewCompaction} strips {@code NamedSubquery} wrappers
- * anyway, so the pass-through is purely an allocation optimisation.</p>
+ * <p>Every binding body is wrapped in a {@link NamedSubquery} so that
+ * {@link org.elasticsearch.xpack.esql.view.ViewCompaction} can identify and handle it correctly.
+ * {@code ViewCompaction} strips the wrapper via
+ * {@code transformDown(NamedSubquery.class, UnaryPlan::child)} before execution.</p>
  */
 public final class LetResolver {
 
@@ -70,9 +70,10 @@ public final class LetResolver {
         // Left fold: build the resolved map incrementally so binding N sees bindings 1..N-1.
         Map<String, LogicalPlan> resolved = new LinkedHashMap<>(letBindings.size());
         for (LetBinding binding : letBindings) {
-            // Substitute earlier bindings into this binding's body (sequential scoping).
+            // Substitute earlier bindings into this binding's body (sequential scoping),
+            // then wrap the result so ViewCompaction can identify it as a named subplan.
             LogicalPlan substitutedBody = substitute(binding.plan(), resolved);
-            resolved.put(binding.name(), wrap(substitutedBody, binding.name()));
+            resolved.put(binding.name(), new NamedSubquery(substitutedBody.source(), substitutedBody, binding.name()));
         }
 
         // Substitute the full map into the main query plan.
@@ -94,17 +95,4 @@ public final class LetResolver {
         });
     }
 
-    /**
-     * Wraps {@code plan} in a {@link NamedSubquery} identified by {@code name}, unless the plan
-     * is a bare {@link UnresolvedRelation} — in which case the relation is returned as-is.
-     * {@link org.elasticsearch.xpack.esql.view.ViewCompaction} would strip the wrapper anyway via
-     * {@code transformDown(NamedSubquery.class, UnaryPlan::child)}, so the pass-through is purely
-     * an optimisation to avoid the extra allocation.
-     */
-    private static LogicalPlan wrap(LogicalPlan plan, String name) {
-        if (plan instanceof UnresolvedRelation) {
-            return plan;
-        }
-        return new NamedSubquery(plan.source(), plan, name);
-    }
 }

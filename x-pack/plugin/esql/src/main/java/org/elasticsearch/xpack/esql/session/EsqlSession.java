@@ -457,21 +457,15 @@ public class EsqlSession {
         // rewritten away into SemiJoin/AntiJoin/MarkJoin — during resolution. The WHERE counter is set by the analyzer/verifier plan
         // walk via FeatureMetric.WHERE matching SemiJoin/AntiJoin/MarkJoin too.
         boolean preserveViewBoundaries = ViewRequestFilterRewriter.appliesToViewOutputs(request.filter());
-        viewResolver.replaceViews(
-            parsedPlan,
-            QuerySettings.PROJECT_ROUTING.get(resolved),
-            (query, viewName) -> {
-                var viewStmt = parser.parseView(query, request.params(), inferenceService.inferenceSettings(), viewName);
-                return LetResolver.resolve(viewStmt.plan(), viewStmt.letBindings());
-            },
-            preserveViewBoundaries,
-            listener.delegateFailureAndWrap((l, viewResolution) -> {
-                // Validate: no InSubquery expressions should survive view and subquery resolution.
-                InSubqueryResolver.verify(viewResolution.plan());
-                viewResolutionProfile.stop();
-                analyseAndExecute(request, executionInfo, planRunner, statement, resolved, viewResolution, l);
-            })
-        );
+        viewResolver.replaceViews(parsedPlan, QuerySettings.PROJECT_ROUTING.get(resolved), (query, viewName) -> {
+            var viewStmt = parser.parseView(query, request.params(), inferenceService.inferenceSettings(), viewName);
+            return LetResolver.resolve(viewStmt.plan(), viewStmt.letBindings());
+        }, preserveViewBoundaries, listener.delegateFailureAndWrap((l, viewResolution) -> {
+            // Validate: no InSubquery expressions should survive view and subquery resolution.
+            InSubqueryResolver.verify(viewResolution.plan());
+            viewResolutionProfile.stop();
+            analyseAndExecute(request, executionInfo, planRunner, statement, resolved, viewResolution, l);
+        }));
     }
 
     private void analyseAndExecute(

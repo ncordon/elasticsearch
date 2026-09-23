@@ -22,7 +22,6 @@ import java.util.List;
 import static org.elasticsearch.xpack.esql.core.tree.Source.EMPTY;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 
 /**
@@ -39,10 +38,7 @@ public class LetResolverTests extends ESTestCase {
         return new UnresolvedRelation(EMPTY, new IndexPattern(EMPTY, pattern), false, Collections.emptyList(), IndexMode.STANDARD, null);
     }
 
-    /**
-     * Wraps a plan in a trivial Limit so it is no longer a bare UnresolvedRelation.
-     * This forces {@code wrap()} to produce a NamedSubquery rather than pass through.
-     */
+    /** Wraps a plan in a trivial Limit to produce a non-trivial subplan. */
     private static LogicalPlan withLimit(LogicalPlan child) {
         return new Limit(
             EMPTY,
@@ -67,27 +63,7 @@ public class LetResolverTests extends ESTestCase {
     }
 
     // -----------------------------------------------------------------------
-    // Bare UnresolvedRelation body → pass-through (no NamedSubquery wrapper)
-    // -----------------------------------------------------------------------
-
-    public void testBareRelationBodyPassesThrough() {
-        // A binding whose body is a bare UnresolvedRelation without exclusion
-        // should substitute the relation directly — not wrap it in NamedSubquery.
-        UnresolvedRelation body = relation("real_index");
-        LetBinding b = binding("myname", body);
-
-        // Main plan refers to "myname"
-        LogicalPlan main = relation("myname");
-        LogicalPlan result = LetResolver.resolve(main, List.of(b));
-
-        // Result should be the body itself, not wrapped
-        assertThat(result, instanceOf(UnresolvedRelation.class));
-        assertThat(result, not(instanceOf(NamedSubquery.class)));
-        assertThat(((UnresolvedRelation) result).indexPattern().indexPattern(), is("real_index"));
-    }
-
-    // -----------------------------------------------------------------------
-    // Non-bare body → wrapped in NamedSubquery
+    // Every binding body is wrapped in NamedSubquery
     // -----------------------------------------------------------------------
 
     public void testNonBareBodyIsWrapped() {
@@ -152,25 +128,6 @@ public class LetResolverTests extends ESTestCase {
         NamedSubquery nsA = (NamedSubquery) limitB.child();
         assertThat(nsA.name(), is("a"));
         assertThat(nsA.child(), sameInstance(aBody));
-    }
-
-    // -----------------------------------------------------------------------
-    // Bare UnresolvedRelation with exclusion pattern still passes through
-    // -----------------------------------------------------------------------
-
-    public void testExclusionPatternStillPassesThrough() {
-        // A binding whose body is a bare UnresolvedRelation — even with an exclusion pattern —
-        // is substituted directly. LetResolver does no index-pattern merging, so there is no
-        // risk of widening the exclusion scope the way ViewCompaction can in ViewResolver.
-        UnresolvedRelation bodyWithExclusion = relation("logs-*,-logs-tmp");
-        LetBinding b = binding("filtered", bodyWithExclusion);
-
-        LogicalPlan main = relation("filtered");
-        LogicalPlan result = LetResolver.resolve(main, List.of(b));
-
-        assertThat(result, instanceOf(UnresolvedRelation.class));
-        assertThat(result, not(instanceOf(NamedSubquery.class)));
-        assertThat(((UnresolvedRelation) result).indexPattern().indexPattern(), is("logs-*,-logs-tmp"));
     }
 
     // -----------------------------------------------------------------------
