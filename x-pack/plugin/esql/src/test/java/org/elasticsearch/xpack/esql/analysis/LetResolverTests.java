@@ -155,20 +155,22 @@ public class LetResolverTests extends ESTestCase {
     }
 
     // -----------------------------------------------------------------------
-    // Exclusion pattern forces NamedSubquery even for bare relation
+    // Bare UnresolvedRelation with exclusion pattern still passes through
     // -----------------------------------------------------------------------
 
-    public void testExclusionPatternForcesWrap() {
-        // A binding whose body is a bare UnresolvedRelation with an exclusion component
-        // must be wrapped in NamedSubquery (merging it would widen the exclusion scope).
+    public void testExclusionPatternStillPassesThrough() {
+        // A binding whose body is a bare UnresolvedRelation — even with an exclusion pattern —
+        // is substituted directly. LetResolver does no index-pattern merging, so there is no
+        // risk of widening the exclusion scope the way ViewCompaction can in ViewResolver.
         UnresolvedRelation bodyWithExclusion = relation("logs-*,-logs-tmp");
         LetBinding b = binding("filtered", bodyWithExclusion);
 
         LogicalPlan main = relation("filtered");
         LogicalPlan result = LetResolver.resolve(main, List.of(b));
 
-        assertThat(result, instanceOf(NamedSubquery.class));
-        assertThat(((NamedSubquery) result).name(), is("filtered"));
+        assertThat(result, instanceOf(UnresolvedRelation.class));
+        assertThat(result, not(instanceOf(NamedSubquery.class)));
+        assertThat(((UnresolvedRelation) result).indexPattern().indexPattern(), is("logs-*,-logs-tmp"));
     }
 
     // -----------------------------------------------------------------------

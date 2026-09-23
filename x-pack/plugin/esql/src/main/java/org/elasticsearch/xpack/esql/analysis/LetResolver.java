@@ -7,7 +7,6 @@
 
 package org.elasticsearch.xpack.esql.analysis;
 
-import org.elasticsearch.transport.RemoteClusterAware;
 import org.elasticsearch.xpack.esql.plan.LetBinding;
 import org.elasticsearch.xpack.esql.plan.logical.LogicalPlan;
 import org.elasticsearch.xpack.esql.plan.logical.NamedSubquery;
@@ -46,12 +45,10 @@ import java.util.Map;
  * cycle guard or depth limit is needed.</p>
  *
  * <h2>Wrapping</h2>
- * <p>Resolution mirrors {@code ViewResolver.resolve}: a binding whose plan is a bare
- * {@link UnresolvedRelation} without an exclusion pattern is substituted directly (pass-through),
- * allowing {@link org.elasticsearch.xpack.esql.view.ViewCompaction} to merge it with sibling
- * relations. Any other plan is wrapped in a {@link NamedSubquery} so downstream compaction can
- * identify it and build the correct {@link org.elasticsearch.xpack.esql.plan.logical.ViewUnionAll}
- * structure.</p>
+ * <p>A binding whose plan is a bare {@link UnresolvedRelation} is substituted directly
+ * (pass-through); any other plan is wrapped in a {@link NamedSubquery}.
+ * {@link org.elasticsearch.xpack.esql.view.ViewCompaction} strips {@code NamedSubquery} wrappers
+ * anyway, so the pass-through is purely an allocation optimisation.</p>
  */
 public final class LetResolver {
 
@@ -99,44 +96,15 @@ public final class LetResolver {
 
     /**
      * Wraps {@code plan} in a {@link NamedSubquery} identified by {@code name}, unless the plan
-     * is a bare {@link UnresolvedRelation} without an exclusion pattern — in which case the
-     * relation is returned as-is so that
-     * {@link org.elasticsearch.xpack.esql.view.ViewCompaction} can merge it with sibling
-     * relations rather than branching.
-     * <p>
-     * This mirrors the pass-through optimisation in {@code ViewResolver.resolve}.
-     * </p>
+     * is a bare {@link UnresolvedRelation} — in which case the relation is returned as-is.
+     * {@link org.elasticsearch.xpack.esql.view.ViewCompaction} would strip the wrapper anyway via
+     * {@code transformDown(NamedSubquery.class, UnaryPlan::child)}, so the pass-through is purely
+     * an optimisation to avoid the extra allocation.
      */
     private static LogicalPlan wrap(LogicalPlan plan, String name) {
-        if (plan instanceof UnresolvedRelation ur && containsExclusion(ur) == false) {
-            return ur;
+        if (plan instanceof UnresolvedRelation) {
+            return plan;
         }
         return new NamedSubquery(plan.source(), plan, name);
-    }
-
-    /**
-     * Returns {@code true} if the index-pattern of {@code ur} contains an exclusion component
-     * (a pattern starting with {@code -}).  Such a relation must not be merged with sibling
-     * relations even when it is otherwise a bare pass-through — merging would widen the scope
-     * of the exclusion beyond the binding boundary.
-     * <p>
-     * Logic mirrors {@code ViewResolver.containsExclusion}.
-     * </p>
-     */
-    private static boolean containsExclusion(UnresolvedRelation ur) {
-        for (String pattern : ur.indexPattern().indexPattern().split(",")) {
-            if (patternIsExclusion(pattern.strip())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean patternIsExclusion(String pattern) {
-        if (pattern.startsWith("-")) {
-            return true;
-        }
-        var split = RemoteClusterAware.splitIndexName(pattern);
-        return split.clusterAlias() != null && split.indexExpression().startsWith("-");
     }
 }
